@@ -7,7 +7,7 @@ LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars
 
 float ver=0.1;
 int R=0,G=0,B=0,W=0,All=0;
-bool mainscreen=1,msp=0;
+bool mainscreen=1,msp=0,F1=0;
 bool arrow[16][2]={0};
 int possel=0;
 int PR=6,PG=9,PB=10,PW=11;
@@ -66,6 +66,7 @@ void setup()
   //pinMode(3,INPUT_PULLUP);
   //attachInterrupt(0,boton,FALLING);
   //attachInterrupt(1,led,FALLING);
+  Timer1.initialize(1000); 
   Timer1.attachInterrupt(timerIsr); 
   encoder = new ClickEncoder(der, izq, pulsador); 
   delay(2000);
@@ -77,13 +78,16 @@ void setup()
     lcd.print("-");
     delay(100);
   }
+   F1=1;
+   Valor();
    lcd.clear();
 
-    R=255;
-    G=255;
+    R=64;
+    G=127;
     B=255;
-    W=255;
-
+    W=0;
+   F1=1;
+   Valor();
 }
 
 
@@ -92,13 +96,11 @@ void loop()
   Encoder(); 
       
     if(mainscreen){
-        //lcd.noCursor();
           if(!msp){
                MainScreenPrepare();
           }
           MainScreenUpdate();
-        //lcd.setCursor(15,0);
-
+          Valor();
       
     }
 }
@@ -112,7 +114,7 @@ void MainScreenPrepare(){
     lcd.print("B:");
     lcd.setCursor(9,1);   
     lcd.print("W:");
-        
+    boton();    
     msp=1;
     
          
@@ -163,7 +165,7 @@ void boton(){
        NewArrow(8,0,1);
        NewArrow(0,1,1);
        NewArrow(8,1,1);
-       digitalWrite(13,!digitalRead(13));
+      // digitalWrite(13,!digitalRead(13));
        break;
     case 1:
        NewArrow(0,0,1); 
@@ -195,9 +197,49 @@ void led(){
 void Encoder(){
     ClickEncoder::Button b = encoder->getButton();
   if (b != ClickEncoder::Open) {
-       boton();
+       
+       if(b == 5){                //Librería manda 5 al presionar
+        boton();
+       }
       
     }
   }
+
+void Valor(){
+if((encoder->getValue())!=0||F1){
+     switch(possel){
+        case 0:
+              R+=2.55*encoder->getValue();
+              G+=2.55*encoder->getValue();
+              B+=2.55*encoder->getValue();
+              W+=2.55*encoder->getValue();
+           break;
+        case 1:
+              R+=2.55*encoder->getValue();
+              break;
+         case 2:
+              G+=2.55*encoder->getValue();
+              break;
+         case 3:
+             B+=2.55*encoder->getValue();
+             break;
+         case 4:
+             W+=2.55*encoder->getValue();
+             break;
+      }
+    
+    if(R>255)R=255;
+    if(G>255)G=255;
+    if(B>255)B=255;  
+    if(W>255)W=255;
+    if(R<0) R=0;
+    if(G<0) G=0;
+    if(B<0) B=0;
+    if(W<0) W=0;
+
+    UpdatePWM(R,G,B,W);
+    F1=0;
+  }  
+}
 
 
