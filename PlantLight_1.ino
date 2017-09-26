@@ -3,21 +3,24 @@
 #include <ClickEncoder.h>             //Libreria necesaria para el rotary encoder. Para descargarla: https://github.com/0xPIT/encoder/tree/arduino
 #include <TimerOne.h>                 //Libreria necesaria para el rotary encoder
 
-LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+LiquidCrystal_I2C lcd(0x27,16,2);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 
-float ver=0.1;
+float ver=0.3;
 int R=0,G=0,B=0,W=0,All=0;
 bool mainscreen=1,msp=0,F1=0;
 bool arrow[16][2]={0};
 int possel=0;
 int PR=6,PG=9,PB=10,PW=11;
+byte buffer1[4];
 ClickEncoder *encoder; 
 void timerIsr() {
   encoder->service();
 }
-#define der 8                                                                        //Pin del rotary encoder de giro hacia la derecha
+long tiempo,tiempo2;
+
+#define der 4                                                                        //Pin del rotary encoder de giro hacia la derecha
 #define izq 7                                                                        //Pin del rotary encoder de giro hacia la izquierda
-#define pulsador 4
+#define pulsador 8
 
 byte AI1[8] = {
   0b00001,
@@ -44,7 +47,8 @@ byte AD1[8] = {
 void setup()
 {
   lcd.init();                      // initialize the lcd 
- // lcd.init();
+  Serial.begin(9600);
+  Serial.setTimeout(100);
   lcd.clear();
   lcd.backlight();
   lcd.setCursor(1,0);
@@ -69,6 +73,7 @@ void setup()
   Timer1.initialize(1000); 
   Timer1.attachInterrupt(timerIsr); 
   encoder = new ClickEncoder(der, izq, pulsador); 
+  encoder->setAccelerationEnabled(0);
   delay(2000);
   lcd.clear();
   lcd.setCursor(1,0);
@@ -82,27 +87,41 @@ void setup()
    Valor();
    lcd.clear();
 
-    R=64;
+    R=127;
     G=127;
-    B=255;
-    W=0;
+    B=127;
+    W=127;
    F1=1;
-   Valor();
+   //Valor();*/
+
+   tiempo=millis();
+   tiempo2=tiempo;
 }
 
 
 void loop()
 {
-  Encoder(); 
-      
+  //SerialLeer();
+   analogWrite(9,200);
+ /* Encoder(); 
+  Valor();    
     if(mainscreen){
           if(!msp){
                MainScreenPrepare();
           }
-          MainScreenUpdate();
-          Valor();
+          
+         // MainScreenPrepare();
+         // MainScreenUpdate();
+         // Valor();
+         if((Valor()||SerialLeer())&&(tiempo+20<millis())){
+            //lcd.clear();
+           // MainScreenPrepare();
+            MainScreenUpdate();
+            tiempo=millis();
+         }
       
     }
+   */
 }
 
 void MainScreenPrepare(){
@@ -124,15 +143,24 @@ void MainScreenUpdate(){
     lcd.setCursor(3,0);   
     lcd.print(R/2.55,0);
     lcd.print("%");
+    if(R/2.55<10) lcd.print("  ");
+    else if (R/2.55<100) lcd.print(" ");
     lcd.setCursor(11,0);   
     lcd.print(G/2.55,0);
     lcd.print("%");
+    if(G/2.55<10) lcd.print("  ");
+    else if (G/2.55<100) lcd.print(" ");
     lcd.setCursor(3,1);   
     lcd.print(B/2.55,0);
     lcd.print("%");
+    if(B/2.55<10) lcd.print("  ");
+    else if (B/2.55<100) lcd.print(" ");
     lcd.setCursor(11,1);   
     lcd.print(W/2.55,0);
     lcd.print("%");
+    if(W/2.55<10) lcd.print("  ");
+    else if (W/2.55<100) lcd.print(" ");
+    
 }
 
 void NewArrow(int y, int x, bool dir){
@@ -151,7 +179,7 @@ void DeleteArrow(int y, int x){
 
 void UpdatePWM(int Rpwm, int Gpwm, int Bpwm, int Wpwm){
     analogWrite(PR,Rpwm);
-    analogWrite(PG,Gpwm);
+    analogWrite(9,200);
     analogWrite(PB,Bpwm);
     analogWrite(PW,Wpwm);
 }
@@ -196,35 +224,41 @@ void led(){
 
 void Encoder(){
     ClickEncoder::Button b = encoder->getButton();
-  if (b != ClickEncoder::Open) {
-       
-       if(b == 5){                //Librería manda 5 al presionar
+  if ((b != ClickEncoder::Open)&&(tiempo2+300<millis())) {
+  //if ((b != ClickEncoder::Open)) {    
+      /* if(b == 5){                //Librería manda 5 al presionar
+        boton();
+        
+       }*/
+       if(b==ClickEncoder::DoubleClicked){
         boton();
        }
+       tiempo2=millis();
       
     }
   }
 
-void Valor(){
-if((encoder->getValue())!=0||F1){
+bool Valor(){
+ int vale = encoder->getValue();
+if(vale!=0||F1){
      switch(possel){
         case 0:
-              R+=2.55*encoder->getValue();
-              G+=2.55*encoder->getValue();
-              B+=2.55*encoder->getValue();
-              W+=2.55*encoder->getValue();
+              R+=vale;
+              G+=vale;
+              B+=vale;
+              W+=vale;
            break;
         case 1:
-              R+=2.55*encoder->getValue();
+              R+=vale;
               break;
          case 2:
-              G+=2.55*encoder->getValue();
+              G+=vale;
               break;
          case 3:
-             B+=2.55*encoder->getValue();
+             B+=vale;
              break;
          case 4:
-             W+=2.55*encoder->getValue();
+             W+=vale;
              break;
       }
     
@@ -239,7 +273,22 @@ if((encoder->getValue())!=0||F1){
 
     UpdatePWM(R,G,B,W);
     F1=0;
+    return 1;
   }  
+else return 0;
+}
+
+bool SerialLeer(){
+    if(Serial.available() > 0){
+      Serial.readBytesUntil('\n',buffer1,4);
+      R=buffer1[0];
+      G=buffer1[1];
+      B=buffer1[2];
+      W=buffer1[3];
+      UpdatePWM(R,G,B,W);
+      return 1;
+    }
+    else return 0;
 }
 
 
