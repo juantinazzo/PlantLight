@@ -10,7 +10,7 @@ int R=0,G=0,B=0,W=0,All=0;
 bool mainscreen=1,msp=0,F1=0;
 bool arrow[16][2]={0};
 int possel=0;
-int PR=6,PG=9,PB=10,PW=11;
+int PR=6,PG=5,PB=3,PW=11;
 byte buffer1[4];
 ClickEncoder *encoder; 
 void timerIsr() {
@@ -96,14 +96,15 @@ void setup()
 
    tiempo=millis();
    tiempo2=tiempo;
+   MainScreenUpdate();
 }
 
 
 void loop()
 {
   //SerialLeer();
-   analogWrite(9,200);
- /* Encoder(); 
+
+  Encoder(); 
   Valor();    
     if(mainscreen){
           if(!msp){
@@ -121,7 +122,7 @@ void loop()
          }
       
     }
-   */
+   
 }
 
 void MainScreenPrepare(){
@@ -179,7 +180,7 @@ void DeleteArrow(int y, int x){
 
 void UpdatePWM(int Rpwm, int Gpwm, int Bpwm, int Wpwm){
     analogWrite(PR,Rpwm);
-    analogWrite(9,200);
+    analogWrite(PG,Gpwm);
     analogWrite(PB,Bpwm);
     analogWrite(PW,Wpwm);
 }
