@@ -64,12 +64,8 @@ void setup()
   pinMode(PB,OUTPUT);
   pinMode(PW,OUTPUT);
   pinMode(13,OUTPUT);
- // pinMode(2,INPUT_PULLUP);
   pinMode(der,INPUT);                                         //Seteamos los pines de salida del encoder
   pinMode(izq,INPUT);
-  //pinMode(3,INPUT_PULLUP);
-  //attachInterrupt(0,boton,FALLING);
-  //attachInterrupt(1,led,FALLING);
   Timer1.initialize(1000); 
   Timer1.attachInterrupt(timerIsr); 
   encoder = new ClickEncoder(der, izq, pulsador); 
@@ -91,8 +87,7 @@ void setup()
     G=127;
     B=127;
     W=127;
-   F1=1;
-   //Valor();*/
+    F1=1;
 
    tiempo=millis();
    tiempo2=tiempo;
@@ -102,27 +97,15 @@ void setup()
 
 void loop()
 {
-  //SerialLeer();
-
   Encoder(); 
-  Valor();    
+  //Valor();    
     if(mainscreen){
-          if(!msp){
-               MainScreenPrepare();
-          }
-          
-         // MainScreenPrepare();
-         // MainScreenUpdate();
-         // Valor();
-         if((Valor()||SerialLeer())&&(tiempo+20<millis())){
-            //lcd.clear();
-           // MainScreenPrepare();
+          if(!msp) MainScreenPrepare();
+          if((Valor()||SerialLeer())&&(tiempo+20<millis())){
             MainScreenUpdate();
             tiempo=millis();
-         }
-      
-    }
-   
+          }
+     }
 }
 
 void MainScreenPrepare(){
@@ -136,8 +119,6 @@ void MainScreenPrepare(){
     lcd.print("W:");
     boton();    
     msp=1;
-    
-         
 }
 
 void MainScreenUpdate(){
@@ -161,31 +142,32 @@ void MainScreenUpdate(){
     lcd.print("%");
     if(W/2.55<10) lcd.print("  ");
     else if (W/2.55<100) lcd.print(" ");
-    
 }
 
-void NewArrow(int y, int x, bool dir){
-
+void NewArrow(int y, int x, bool dir)
+{
     lcd.setCursor(y,x);
     arrow[y][x]=1;
     lcd.write((uint8_t)dir);
 }
 
-void DeleteArrow(int y, int x){
-
+void DeleteArrow(int y, int x)
+{
     lcd.setCursor(y,x);
     lcd.print(" ");
     arrow[y][x]=0;
 }
 
-void UpdatePWM(int Rpwm, int Gpwm, int Bpwm, int Wpwm){
+void UpdatePWM(int Rpwm, int Gpwm, int Bpwm, int Wpwm)
+{
     analogWrite(PR,Rpwm);
     analogWrite(PG,Gpwm);
     analogWrite(PB,Bpwm);
     analogWrite(PW,Wpwm);
 }
 
-void boton(){
+void boton()
+{
   possel+=1;
   if(possel>4){ possel=0;}
   switch(possel){
@@ -194,7 +176,6 @@ void boton(){
        NewArrow(8,0,1);
        NewArrow(0,1,1);
        NewArrow(8,1,1);
-      // digitalWrite(13,!digitalRead(13));
        break;
     case 1:
        NewArrow(0,0,1); 
@@ -215,71 +196,64 @@ void boton(){
        DeleteArrow(0,1);
        break;
   }
-
- 
 }
 
 void led(){
   digitalWrite(13,!digitalRead(13));
 }
 
-void Encoder(){
+void Encoder()
+{
     ClickEncoder::Button b = encoder->getButton();
-  if ((b != ClickEncoder::Open)&&(tiempo2+300<millis())) {
-  //if ((b != ClickEncoder::Open)) {    
-      /* if(b == 5){                //Librería manda 5 al presionar
-        boton();
-        
-       }*/
-       if(b==ClickEncoder::DoubleClicked){
-        boton();
-       }
-       tiempo2=millis();
-      
+    if ((b != ClickEncoder::Open)&&(tiempo2+300<millis())) {
+         if(b==ClickEncoder::DoubleClicked) boton();
+         tiempo2=millis();
     }
-  }
-
-bool Valor(){
- int vale = encoder->getValue();
-if(vale!=0||F1){
-     switch(possel){
-        case 0:
-              R+=vale;
-              G+=vale;
-              B+=vale;
-              W+=vale;
-           break;
-        case 1:
-              R+=vale;
-              break;
-         case 2:
-              G+=vale;
-              break;
-         case 3:
-             B+=vale;
-             break;
-         case 4:
-             W+=vale;
-             break;
-      }
-    
-    if(R>255)R=255;
-    if(G>255)G=255;
-    if(B>255)B=255;  
-    if(W>255)W=255;
-    if(R<0) R=0;
-    if(G<0) G=0;
-    if(B<0) B=0;
-    if(W<0) W=0;
-
-    UpdatePWM(R,G,B,W);
-    F1=0;
-    return 1;
-  }  
-else return 0;
 }
 
-bool SerialLeer(){
+bool Valor()
+{
+  int vale = encoder->getValue();
+  if(vale!=0||F1){
+       switch(possel){
+          case 0:
+                R+=vale;
+                G+=vale;
+                B+=vale;
+                W+=vale;
+             break;
+          case 1:
+                R+=vale;
+                break;
+           case 2:
+                G+=vale;
+                break;
+           case 3:
+               B+=vale;
+               break;
+           case 4:
+               W+=vale;
+               break;
+        }
+      
+      if(R>255)R=255;
+      if(G>255)G=255;
+      if(B>255)B=255;  
+      if(W>255)W=255;
+      if(R<0) R=0;
+      if(G<0) G=0;
+      if(B<0) B=0;
+      if(W<0) W=0;
+  
+      UpdatePWM(R,G,B,W);
+      F1=0;
+      return 1;
+    }  
+  else return 0;
+}
+
+bool SerialLeer()
+{
     if(Serial.available() > 0){
       Serial.readBytesUntil('\n',buffer1,4);
       R=buffer1[0];
