@@ -1,1 +1,1 @@
-PlantLight_1
+Código de Control para un sistema de iluminación con leds.
